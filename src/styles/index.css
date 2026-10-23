@@ -1,0 +1,26 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+@keyframes checkout-attention {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgb(255 255 255 / 0);
+	}
+	20% {
+		box-shadow: 0 0 0 5px rgb(255 255 255 / 0.9), 0 0 24px rgb(255 255 255 / 0.95);
+	}
+	40% {
+		box-shadow: 0 0 0 0 rgb(255 255 255 / 0);
+	}
+}
+
+.checkout-attention {
+	animation: checkout-attention 0.7s ease-in-out 3;
+}
+
+@media (max-width: 768px) {
+	.checkout-attention {
+		animation-duration: 0.3s;
+		animation-delay: 0.5s;
+	}
+}
