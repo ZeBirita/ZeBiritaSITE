@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router';
+import { Outlet, ScrollRestoration } from 'react-router';
 import { Header } from './components/Header';
 import { CartProvider } from './context/CartContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -13,6 +13,7 @@ export function Root() {
           <main className="pt-20">
             <Outlet />
           </main>
+          <ScrollRestoration />
           <Toaster
             position="top-center"
             toastOptions={{

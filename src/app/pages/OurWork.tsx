@@ -2,10 +2,31 @@ import { useEffect } from 'react';
 import { useLocation, Link } from 'react-router';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
+import { useCart } from '../context/CartContext';
+import { weekdays, WeeklyOpeningHours } from '../data/openingHours';
+
+const weekdayLabels: Record<(typeof weekdays)[number], string> = {
+    monday: 'Segunda-feira:',
+    tuesday: 'Terça-feira:',
+    wednesday: 'Quarta-feira:',
+    thursday: 'Quinta-feira:',
+    friday: 'Sexta-feira:',
+    saturday: 'Sábado:',
+    sunday: 'Domingo:',
+};
+
+function formatSchedule(hours: WeeklyOpeningHours) {
+    return weekdays.map((day) => ({
+        day,
+        label: weekdayLabels[day],
+        hours: hours[day],
+    }));
+}
 
 export function OurWork() {
     const { pathname } = useLocation();
     const { t } = useLanguage();
+    const { openingHours, menuSyncStatus, menuSyncError } = useCart();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -110,15 +131,31 @@ export function OurWork() {
                     className="bg-card border border-border rounded-xl p-6 mb-8"
                 >
                     <h2 className="text-2xl font-bold mb-4">{t('Horário de Funcionamento')}</h2>
-                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                                    <li><span className="font-semibold text-foreground">{t('Segunda-feira:')}</span> 12:00 às 00:00</li>
-                                    <li><span className="font-semibold text-foreground">{t('Terça-feira:')}</span> {t('Fechado (Folga)')}</li>
-                                    <li><span className="font-semibold text-foreground">{t('Quarta-feira:')}</span> 12:00 às 00:00</li>
-                                    <li><span className="font-semibold text-foreground">{t('Quinta-feira:')}</span> 12:00 às 00:00</li>
-                                    <li><span className="font-semibold text-foreground">{t('Sexta-feira:')}</span> 12:00 às 00:00</li>
-                                    <li><span className="font-semibold text-foreground">{t('Sábado:')}</span> 12:00 às 00:00</li>
-                                    <li><span className="font-semibold text-foreground">{t('Domingo:')}</span> 12:00 às 00:00</li>
-                    </ul>
+                    {openingHours ? (
+                        <>
+                            {menuSyncStatus === 'error' && (
+                                <p className="mb-3 text-sm text-destructive" role="alert">
+                                    {t('A mostrar os últimos horários carregados. A sincronização atual falhou:')} {menuSyncError}
+                                </p>
+                            )}
+                            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                                {formatSchedule(openingHours).map(({ day, label, hours }) => (
+                                    <li key={day}>
+                                        <span className="font-semibold text-foreground">{t(label)}</span>{' '}
+                                        {hours.closed
+                                            ? t('Fechado (Folga)')
+                                            : `${hours.opensAt} ${t('às')} ${hours.closesAt}`}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    ) : (
+                        <p className={menuSyncStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'} role={menuSyncStatus === 'error' ? 'alert' : 'status'}>
+                            {menuSyncStatus === 'error'
+                                ? `${t('Não foi possível carregar os horários.')}${menuSyncError ? ` ${menuSyncError}` : ''}`
+                                : t('Sincronizando cardápio...')}
+                        </p>
+                    )}
                 </motion.div>
 
                 <div className="flex justify-center mt-8 mb-8">

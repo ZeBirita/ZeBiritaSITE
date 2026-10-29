@@ -1,21 +1,16 @@
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { formatPrice } from '../utils/price';
 
 export function Cart() {
-  const { pathname } = useLocation();
   const { cart, removeFromCart, updateQuantity, getTotal } = useCart();
   const navigate = useNavigate();
   const total = getTotal();
   const subtotal = total >= 10 ? 0 : 10 - total;
   const { t } = useLanguage();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
 
   if (cart.length === 0) {
     return (
@@ -76,7 +71,7 @@ export function Cart() {
                   className="w-24 h-24 object-cover rounded-lg"
                 />
                 <p className="hidden max-[374px]:block absolute text-xs text-muted-foreground mt-[6.5rem] ml-1 whitespace-nowrap">
-                  {t('cada')} {item.drink.price.toFixed(2)} €
+                  {t('cada')} {formatPrice(item.drink.price)}
                 </p>
                 <div className="flex-1">
                   <h3 className="font-semibold mb-1">{t(item.drink.name.replaceAll('Combo', t('Combo')))}</h3>
@@ -117,7 +112,7 @@ export function Cart() {
                       <Trash2 className="w-5 h-5" />
                     </motion.button>
                     <p className="text-xl font-bold text-primary">
-                      {(item.drink.price * item.quantity).toFixed(2)} €
+                      {formatPrice(item.drink.price * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -134,11 +129,11 @@ export function Cart() {
                         <Trash2 className="w-5 h-5" />
                       </motion.button>
                       <p className="text-sm text-muted-foreground">
-                      {t('cada')} {item.drink.price.toFixed(2)} €
+                      {t('cada')} {formatPrice(item.drink.price)}
                       </p>
                     </div>
                     <p className="text-xl font-bold text-primary">
-                      {(item.drink.price * item.quantity).toFixed(2)} €
+                      {formatPrice(item.drink.price * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -156,17 +151,17 @@ export function Cart() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>{total.toFixed(2)} €</span>
+                  <span>{formatPrice(total)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('Taxa de pedido mínimo')}</span>
-                  <span className="text-primary">{subtotal == 0 ? t('Grátis') : `${subtotal.toFixed(2)} €`}</span>
+                  <span className="text-primary">{subtotal == 0 ? t('Grátis') : formatPrice(subtotal)}</span>
                 </div>
                 <div className="border-t border-border pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Total</span>
                     <span className="text-2xl font-bold text-primary">
-                      {(Number(subtotal) + Number(total)).toFixed(2)} €
+                      {formatPrice(Number(subtotal) + Number(total))}
                     </span>
                   </div>
                 </div>

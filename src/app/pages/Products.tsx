@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, SlidersHorizontal } from 'lucide-react';
-import { drinks } from '../data/drinks';
+import { Loader2, Search } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 import { categories } from '../types';
 import { DrinkCard } from '../components/DrinkCard';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,6 +11,14 @@ export function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
   const [sortBy, setSortBy] = useState('featured');
+  const {
+    drinks,
+    availability,
+    menuSyncStatus,
+    menuSyncError,
+    isStoreOpen,
+    hasLoadedMenu,
+  } = useCart();
   const { t } = useLanguage();
 
   const filteredDrinks = drinks
@@ -131,27 +139,56 @@ export function Products() {
           </div> */}
         </div>
 
-        <div className="mb-6">
-          <p className="text-muted-foreground">
-            {t('Mostrando')} {filteredDrinks.length} {t(filteredDrinks.length === 1 ? 'produto' : 'produtos')}
-          </p>
-        </div>
+        {menuSyncStatus === 'loading' && (
+          <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground" role="status">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            {t('Sincronizando cardápio...')}
+          </div>
+        )}
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredDrinks.map((drink, index) => (
-            <motion.div
-              key={drink.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="h-full"
-            >
-              <DrinkCard drink={drink} />
-            </motion.div>
-          ))}
-        </div>
+        {menuSyncStatus === 'error' && (
+          <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive" role="alert">
+            <p className="font-semibold">{t('Não foi possível carregar o cardápio atualizado.')}</p>
+            <p className="mt-1 text-sm">{menuSyncError}</p>
+          </div>
+        )}
 
-        {filteredDrinks.length === 0 && (
+        {menuSyncStatus === 'ready' && !isStoreOpen && (
+          <div className="mb-6 rounded-lg border border-primary/40 bg-primary/10 p-4 text-foreground" role="status">
+            {t('Estamos fora do horário de funcionamento. O cardápio continua disponível para consulta, mas não é possível adicionar produtos agora.')}
+          </div>
+        )}
+
+        {hasLoadedMenu && (
+          <>
+            <div className="mb-6">
+              <p className="text-muted-foreground">
+                {t('Mostrando')} {filteredDrinks.length} {t(filteredDrinks.length === 1 ? 'produto' : 'produtos')}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredDrinks.map((drink, index) => (
+                <motion.div
+                  key={drink.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="h-full"
+                >
+                  <DrinkCard
+                    drink={drink}
+                    isAvailable={availability[drink.id] !== false}
+                    isStoreOpen={isStoreOpen}
+                    canAddToCart={menuSyncStatus === 'ready' && isStoreOpen && availability[drink.id] !== false}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {hasLoadedMenu && filteredDrinks.length === 0 && (
           <div className="text-center py-16">
             <p className="text-muted-foreground text-lg">
               {t('Nenhum produto encontrado com os filtros selecionados.')}

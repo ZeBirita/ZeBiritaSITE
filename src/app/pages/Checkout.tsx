@@ -4,8 +4,9 @@ import { motion } from 'motion/react';
 import { CreditCard, Smartphone, Wallet, MessageCircle, Check, MapPin, Loader2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
-import { Address, typePaymentMethod, PaymentMethods, newAddress, icone } from '../types';
+import { Address, typePaymentMethod, PaymentMethods, newAddress } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { formatPrice } from '../utils/price';
 
 const useGeolocation = () => {
   const [loading, setLoading] = useState(false);
@@ -105,7 +106,10 @@ export function Checkout() {
   const subtotal = total >= 10 ? 0 : 10 - total;
   const baseTotal = total + subtotal;
   const deliveryFee = getDeliveryFee(address);
-  const orderTotal = baseTotal + (deliveryFee ?? 0);
+  const deliveryFeeText = deliveryFee === null
+    ? `${formatPrice(1)} (${t('a confirmar')})`
+    : formatPrice(deliveryFee);
+  const orderTotal = baseTotal + (deliveryFee ?? 1);
   const payingAmount = Number(payingAmountInput.replace(',', '.')) || 0;
 
   useEffect(() => {
@@ -245,33 +249,35 @@ export function Checkout() {
             'Dinheiro'
         ;
 
-      let message = `😉 *Olá! Gostaria de fazer um pedido:*`;
-      message += `\n\n📦 *Produtos:*`;
+      let message = `Olá! Gostaria de fazer um pedido:`;
+      message += `\n\nPRODUTOS:`;
 
       cart.forEach((item) => {
-        message += `\n\n- ${item.quantity} x ${item.drink.name} ${icone[Array.isArray(item.drink.category) ? item.drink.category[0] : item.drink.category]}`;
+        message += `\n\n- ${item.quantity} x ${item.drink.name} - ${formatPrice(item.drink.price)} cada (${formatPrice(item.drink.price * item.quantity)})`;
       });
 
-      message += `\n\n💰 *Total:* ${orderTotal.toFixed(2)} €`;
-      message += `\n💳 *Forma de pagamento:* ${paymentText}`;
+      message += `\n\nTOTAL: ${formatPrice(orderTotal)}`;
+      message += `\nForma de pagamento: ${paymentText}`;
 
-      if (paymentText === 'Dinheiro' && needChange) {
-        message += `\n💵 *Valor que irá pagar:* ${payingAmount.toFixed(2)} €`;
-        message += `\n🔄 *Troco a ser devolvido:* ${(payingAmount - orderTotal).toFixed(2)} €`;
-      } else {
-        message += `\n💸 *Não precisa de troco*`;
+      if (paymentText === 'Dinheiro') {
+        if (needChange) {
+          message += `\nValor que irá pagar: ${formatPrice(payingAmount)}`;
+          message += `\nTroco a devolver: ${formatPrice(payingAmount - orderTotal)}`;
+        } else {
+          message += `\nTroco: Não necessário`;
+        }
       }
 
       if (subtotal > 0) {
-        message += `\n📱 *Valor de taxa mínima pago pelo cliente:* ${subtotal.toFixed(2)} €`;
+        message += `\nValor de taxa mínima pago pelo cliente: ${formatPrice(subtotal)}`;
       }
 
-      message += `\n🚚 *Taxa de entrega:* ${deliveryFee === null ? 'Pendente' : `${deliveryFee.toFixed(2)} €`}`;
+      message += `\nTaxa de entrega: ${deliveryFeeText}`;
 
-      message += `\n\n*Endereço de Entrega:*\n${addressText}`;
+      message += `\n\nENDEREÇO DE ENTREGA:\n${addressText}`;
 
       if (address.coordinates) {
-        message += `\n📍 *Localização:* https://www.google.com/maps?q=${address.coordinates.lat},${address.coordinates.lng}`;
+        message += `\nLocalização (Google Maps): https://www.google.com/maps?q=${address.coordinates.lat},${address.coordinates.lng}`;
       }
 
       const whatsappUrl = `https://wa.me/351931835337?text=${encodeURIComponent(message)}`;
@@ -522,7 +528,7 @@ export function Checkout() {
                       </div>
                     )}
                     <p className="text-red-500 mt-1">
-                      ⚠️ {t('Valor mínimo cobrado:')} {minPayingAmount.toFixed(2)} €
+                      ⚠️ {t('Valor mínimo cobrado:')} {formatPrice(minPayingAmount)}
                     </p>
                   </div>
                 </div>
@@ -539,7 +545,7 @@ export function Checkout() {
                     <span className="min-w-0 flex-1 break-words text-muted-foreground">
                       {item.quantity}x {item.drink.name.replaceAll('Combo', t('Combo'))}
                     </span>
-                    <span className="shrink-0 whitespace-nowrap">{(item.drink.price * item.quantity).toFixed(2)} €</span>
+                    <span className="shrink-0 whitespace-nowrap">{formatPrice(item.drink.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -547,27 +553,27 @@ export function Checkout() {
               <div className="border-t border-border pt-4 mb-6 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>{total.toFixed(2)} €</span>
+                  <span>{formatPrice(total)}</span>
                 </div>
                 {paymentMethod === 'cash' && needChange && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t('Troco a receber')}</span>
-                    <span>{Math.max(0, payingAmount - orderTotal).toFixed(2)} €</span>
+                    <span>{formatPrice(Math.max(0, payingAmount - orderTotal))}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t('Taxa pedido mínimo')}</span>
-                  <span className="text-primary">{subtotal == 0 ? t('Grátis') : `${subtotal.toFixed(2)} €`}</span>
+                  <span className="text-primary">{subtotal == 0 ? t('Grátis') : formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between gap-2 text-sm">
                   <span className="text-muted-foreground whitespace-nowrap">{t('Taxa de entrega')}</span>
                   <span className="text-primary text-right whitespace-nowrap">
-                    {deliveryFee === null ? t('Pendente') : `${deliveryFee.toFixed(2)} €`}
+                    {deliveryFeeText}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-2xl font-bold text-primary">{orderTotal.toFixed(2)} €</span>
+                  <span className="text-2xl font-bold text-primary">{formatPrice(orderTotal)}</span>
                 </div>
               </div>
 

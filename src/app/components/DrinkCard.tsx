@@ -6,12 +6,16 @@ import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { formatPrice } from '../utils/price';
 
 interface DrinkCardProps {
   drink: Drink;
+  isAvailable: boolean;
+  isStoreOpen: boolean;
+  canAddToCart: boolean;
 }
 
-export function DrinkCard({ drink }: DrinkCardProps) {
+export function DrinkCard({ drink, isAvailable, isStoreOpen, canAddToCart }: DrinkCardProps) {
   const { addToCart } = useCart();
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
@@ -33,14 +37,26 @@ export function DrinkCard({ drink }: DrinkCardProps) {
   }, [isExpanded]);
 
   const handleAddToCart = () => {
-    addToCart(drink);
+    if (!addToCart(drink)) {
+      toast.error(
+        !isStoreOpen
+          ? t('Estamos fora do horário de funcionamento.')
+          : !isAvailable
+            ? t('Este produto está indisponível.')
+            : t('Este produto está indisponível ou o cardápio ainda não foi sincronizado.'),
+      );
+      return;
+    }
     toast.success(`${drink.name} ${t('adicionado ao carrinho!')}`, {
       duration: 2000,
     });
   };
 
   const handleAddToCart10 = () => {
-    addToCart(drink, 10);
+    if (!addToCart(drink, 10)) {
+      toast.error(t('Este produto está indisponível ou o cardápio ainda não foi sincronizado.'));
+      return;
+    }
     toast.success(`10x ${drink.name} ${t('adicionados ao carrinho!')}`, {
       duration: 2000,
     });
@@ -68,6 +84,15 @@ export function DrinkCard({ drink }: DrinkCardProps) {
         {drink.featured && (
           <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold">
             {t('Destaque')}
+          </div>
+        )}
+        {!canAddToCart && (
+          <div className="absolute bottom-3 left-3 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground">
+            {!isStoreOpen
+              ? t('Fora do horário')
+              : !isAvailable
+                ? t('Indisponível')
+                : t('Sincronização pendente')}
           </div>
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -107,7 +132,7 @@ export function DrinkCard({ drink }: DrinkCardProps) {
                 {t(drink.description)}
               </p>
               <span className="mt-4 block text-xl font-bold text-primary sm:text-2xl">
-                {drink.price.toFixed(2)} €
+                {formatPrice(drink.price)}
               </span>
             </div>
           </div>
@@ -146,7 +171,7 @@ export function DrinkCard({ drink }: DrinkCardProps) {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-auto">
           <div>
             <span className="text-xl sm:text-2xl font-bold text-primary">
-              {drink.price.toFixed(2)} €
+              {formatPrice(drink.price)}
             </span>
           </div>
           <div className="flex flex-col gap-2 w-full sm:w-auto">
@@ -154,14 +179,25 @@ export function DrinkCard({ drink }: DrinkCardProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddToCart}
+              disabled={!canAddToCart}
+              aria-disabled={!canAddToCart}
+              aria-label={canAddToCart ? t('Adicionar') : !isStoreOpen ? t('Fora do horário') : t('Indisponível')}
               className="bg-primary hover:bg-primary/90 
                  text-primary-foreground 
-                 px-2 py-1 rounded-lg flex items-center justify-center gap-1 text-xs
+                 px-2 py-3 rounded-lg flex items-center justify-center gap-1 text-xs
                  sm:px-4 sm:py-2 sm:gap-2 sm:text-sm
-                 transition-colors cursor-pointer"
+                 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm">{t('Adicionar')}</span>
+              <span className="text-sm">
+                {canAddToCart
+                  ? t('Adicionar')
+                  : !isStoreOpen
+                    ? t('Fora do horário')
+                    : !isAvailable
+                      ? t('Indisponível')
+                      : t('Sincronizando...')}
+              </span>
             </motion.button>
 
             {/* <motion.button
