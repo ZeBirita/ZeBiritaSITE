@@ -192,11 +192,14 @@ export function Checkout() {
       setAddress(realAddress);
       toast.success(t('Localização obtida com sucesso!'));
     } catch (error: any) {
-      console.error(error);
-      if (error.code === 1) toast.error(t('Permissão negada. Preencha manualmente.'));
-      else if (error.code === 2) toast.error(t('Localização indisponível. Preencha manualmente.'));
-      else if (error.code === 3) toast.error(t('Tempo esgotado. Tente novamente.'));
-      else toast.error(error.message || t('Não foi possível obter sua localização.'));
+      if (error.code === 1) {
+        toast.error(t('Permissão negada. Preencha manualmente.'));
+      } else {
+        console.error(error);
+        if (error.code === 2) toast.error(t('Localização indisponível. Preencha manualmente.'));
+        else if (error.code === 3) toast.error(t('Tempo esgotado. Tente novamente.'));
+        else toast.error(error.message || t('Não foi possível obter sua localização.'));
+      }
     }
   };
 
