@@ -22,7 +22,7 @@ export function Header() {
               onClick={() => navigate('/#')}
               className="flex"
             >
-              <img src="/assets/logozebiritagrande.avif" height={60} width={70} alt="Zé Birita Logo" />
+              <img src="/assets/LogograndeBIRITA.png" height={60} width={70} alt="Zé Birita Logo" />
               <div className="inline-block max-[439px]:hidden text-primary-foreground px-8 py-4 rounded-lg text-lg font-semibold transition-all">
                 <h1 className="text-xl font-bold text-primary">Zé Birita </h1>
                 <p className="text-xs text-muted-foreground">{t('Delivery')}</p>
